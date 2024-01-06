@@ -4,6 +4,11 @@
 import numpy as np
 from util import load, build_vocabulary, get_bags_of_sifts
 from classifiers import nearest_neighbor_classify, svm_classify
+import pickle
+
+from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 #For this assignment, you will need to report performance for sift features on two different classifiers:
 # 1) Bag of sift features and nearest neighbor classifier
@@ -27,17 +32,76 @@ test_image_paths, test_labels = load("sift/test")
  each function for more details. '''
 
         
-print('Extracting SIFT features\n')
-#TODO: You code build_vocabulary function in util.py
-kmeans = build_vocabulary(train_image_paths, vocab_size=200)
+recalculate = False  # Set this to True if you want to recalculate features
 
-#TODO: You code get_bags_of_sifts function in util.py 
-train_image_feats = get_bags_of_sifts(train_image_paths, kmeans)
-test_image_feats = get_bags_of_sifts(test_image_paths, kmeans)
+if not recalculate:
+    # Load the saved kmeans model, feature vectors, and labels
+    with open('kmeans_model.pkl', 'rb') as f:
+        kmeans = pickle.load(f)
+    with open('train_image_feats.pkl', 'rb') as f:
+        train_image_feats = pickle.load(f)
+    with open('train_labels.pkl', 'rb') as f:
+        train_labels = pickle.load(f)
+    with open('test_image_feats.pkl', 'rb') as f:
+        test_image_feats = pickle.load(f)
+    with open('test_labels.pkl', 'rb') as f:
+        test_labels = pickle.load(f)
+else:
+    # Code for recalculating features
+    kmeans = build_vocabulary(train_image_paths, vocab_size=60)
+    train_image_feats = get_bags_of_sifts(train_image_paths, kmeans)
+    test_image_feats = get_bags_of_sifts(test_image_paths, kmeans)
+    
+        # Save the kmeans model, feature vectors, and labels
+    with open('kmeans_model.pkl', 'wb') as f:
+        pickle.dump(kmeans, f)
+    with open('train_image_feats.pkl', 'wb') as f:
+        pickle.dump(train_image_feats, f)
+    with open('train_labels.pkl', 'wb') as f:
+        pickle.dump(train_labels, f)
+    with open('test_image_feats.pkl', 'wb') as f:
+        pickle.dump(test_image_feats, f)
+    with open('test_labels.pkl', 'wb') as f:
+        pickle.dump(test_labels, f)
+
         
 #If you want to avoid recomputing the features while debugging the
 #classifiers, you can either 'save' and 'load' the extracted features
 #to/from a file.
+
+# Come up with the average histogram for each category
+def get_average_histograms(image_feats, labels, num_categories):
+    # Initialize a matrix to hold the sum of histograms for each category
+    sum_histograms = np.zeros((num_categories, image_feats.shape[1]))
+    count_per_category = np.zeros(num_categories)
+
+    # Sum histograms for each category
+    for i, histogram in enumerate(image_feats):
+        category = int(labels[i])        
+        sum_histograms[category] += histogram
+        count_per_category[category] += 1
+
+    # Compute average histograms
+    avg_histograms = sum_histograms / count_per_category[:, None]
+
+    return avg_histograms
+
+# avg_histograms = get_average_histograms(train_image_feats, train_labels, 15)
+
+def plot_average_histograms(avg_histograms, num_categories):
+    plt.figure(figsize=(15, 10))
+    for i in range(num_categories):
+        plt.subplot(3, 5, i+1)  # Adjust the grid size based on your number of categories
+        plt.bar(range(avg_histograms.shape[1]), avg_histograms[i])
+        plt.title(f'Category {i}')
+        plt.xlabel('Cluster Index')
+        plt.ylabel('Average Frequency')
+
+    plt.tight_layout()
+    plt.show()
+
+# plot_average_histograms(avg_histograms, 15)
+
 
 ''' Step 2: Classify each test image by training and using the appropriate classifier
  Each function to classify test features will return an N x l cell array,
@@ -55,7 +119,6 @@ print('Using support vector machine to predict test set categories\n')
 pred_labels_svm = svm_classify(train_image_feats, train_labels, test_image_feats)
 
 
-
 print('---Evaluation---\n')
 # Step 3: Build a confusion matrix and score the recognition system for 
 #         each of the classifiers.
@@ -66,6 +129,32 @@ print('---Evaluation---\n')
 #   You will need to convert the one-hot format labels back
 #   to their category name format.
 
+def calculate_accuracy(true_labels, predicted_labels):
+    correct_predictions = np.sum(true_labels == predicted_labels)
+    total_predictions = len(true_labels)
+    accuracy = correct_predictions / total_predictions
+    return accuracy
+
+accuracy_knn = calculate_accuracy(test_labels, pred_labels_knn)
+accuracy_svm = calculate_accuracy(test_labels, pred_labels_svm)
+
+print(f"Accuracy of KNN Classifier: {accuracy_knn * 100:.2f}%")
+print(f"Accuracy of SVM Classifier: {accuracy_svm * 100:.2f}%")
+
+def plot_confusion_matrix(true_labels, predicted_labels, classes, title):
+    matrix = confusion_matrix(true_labels, predicted_labels, labels=classes)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(matrix, annot=True, fmt='d', cmap='Blues', xticklabels=classes, yticklabels=classes)
+    plt.title(title)
+    plt.ylabel('Actual Labels')
+    plt.xlabel('Predicted Labels')
+    plt.show()
+
+# Assuming that your labels are not one-hot encoded. If they are, convert them first.
+classes = np.unique(test_labels)  # Get the unique class labels
+
+plot_confusion_matrix(test_labels, pred_labels_knn, classes, "Confusion Matrix for KNN Classifier")
+plot_confusion_matrix(test_labels, pred_labels_svm, classes, "Confusion Matrix for SVM Classifier")
 
 # Interpreting your performance with 100 training examples per category:
 #  accuracy  =   0 -> Your code is broken (probably not the classifier's

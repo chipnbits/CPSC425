@@ -26,7 +26,8 @@ def build_vocabulary(image_paths, vocab_size):
     # Initialize an array of features, which will store the sampled descriptors
     # keypoints = np.zeros((n_image * n_each, 2))
     descriptors = np.zeros((n_image * n_each, 128))
-
+    
+    n_descriptors_found = 0
     for i, path in enumerate(image_paths):
         # Load features from each image
         features = np.loadtxt(path, delimiter=',',dtype=float)
@@ -34,10 +35,19 @@ def build_vocabulary(image_paths, vocab_size):
         sift_descriptors = features[:, 2:]
 
         # TODO: Randomly sample n_each descriptors from sift_descriptor and store them into descriptors
-
-    # TODO: pefrom k-means clustering to cluster sampled sift descriptors into vocab_size regions.
-    # You can use KMeans from sci-kit learn.
-    # Reference: https://scikit-learn.org/stable/modules/generated/sklearn.cluster.KMeans.html
+        n_descriptors = sift_descriptors.shape[0]  
+        n_samples = min(n_each, n_descriptors)              
+        # Select n_each random indices
+        idx_samples = np.random.choice(n_descriptors, size=n_samples, replace=False)
+        # Slice out random slected descriptors and store them into descriptors
+        descriptors[n_descriptors_found:n_descriptors_found+n_samples, :] = sift_descriptors[idx_samples, :]
+        n_descriptors_found += n_samples
+        
+    # Resize the descriptors array to remove uninitialized rows
+    descriptors = descriptors[:n_descriptors_found, :]
+        
+    print("Clustering", descriptors.shape[0], "features")    
+    kmeans = KMeans(n_clusters=vocab_size).fit(descriptors)
     
     return kmeans
     
@@ -65,8 +75,15 @@ def get_bags_of_sifts(image_paths, kmeans):
         # TODO: Assign each feature to the closest cluster center
         # Again, each feature consists of the (x, y) location and the 128-dimensional sift descriptor
         # You can access the sift descriptors part by features[:, 2:]
-
-        # TODO: Build a histogram normalized by the number of descriptors
+        
+        # We use the prdict method of the kmeans model to assign each feature to the closest cluster center
+        cluster_labels = kmeans.predict(features[:, 2:])
+        
+        # TODO: Build a histogram normalized by the number of descriptors      
+        hist, bin_edges = np.histogram(cluster_labels, bins=vocab_size, range=(0, vocab_size), density=True)
+        image_feats[i, :] = hist
+        
+    print(f'Image features shape: {image_feats.shape}')    
 
     return image_feats
 

@@ -1,3 +1,6 @@
+from sklearn.neighbors import KNeighborsClassifier as KNN
+from sklearn.svm import LinearSVC as SVM
+
  #Starter code prepared by Borna Ghotbi for computer vision
  #based on MATLAB code by James Hay
 
@@ -27,6 +30,10 @@ def nearest_neighbor_classify(train_image_feats, train_labels, test_image_feats)
     	# You can use knn from sci-kit learn.
         # Reference: https://scikit-learn.org/stable/modules/generated/sklearn.neighbors.KNeighborsClassifier.html
     '''
+    model_knn = KNN(15)
+    model_knn.fit(train_image_feats, train_labels)
+    predicted_labels = model_knn.predict(test_image_feats)
+ 
     return predicted_labels
 
 
@@ -60,5 +67,10 @@ def svm_classify(train_image_feats, train_labels, test_image_feats):
         # Reference: https://scikit-learn.org/stable/modules/svm.html
 
     '''
+    
+    model = SVM(C = 25)
+    model.fit(train_image_feats, train_labels)
+    predicted_labels = model.predict(test_image_feats)
+    
     return predicted_labels
 
