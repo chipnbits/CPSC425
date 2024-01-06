@@ -5,4 +5,5 @@ There are a total of six assignments to be completed along with various readings
 - Assignment 1: Image Filtering and Hybrid Images
 - Assignment 2: Scaled Representations, Face Detection and Image Blending
 - Assignment 3: Generating Textures for Image Fill Applications
-
+- Assignment 4: SIFT and RANSAC for Image Matching and Stitching
+- Assignment 5: Human Engineered Features: Bag of Words for Scene Classification
