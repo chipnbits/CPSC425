@@ -10,3 +10,5 @@ There are a total of six assignments to be completed along with various readings
 - Assignment 6: Exploring CNNs and Image Segmentation
 
 All readings, course notes, and assignments completed as of Jan 6th, 2024
+
+Personal MD notes are viewable in personal notes directory
