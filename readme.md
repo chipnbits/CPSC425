@@ -7,3 +7,6 @@ There are a total of six assignments to be completed along with various readings
 - Assignment 3: Generating Textures for Image Fill Applications
 - Assignment 4: SIFT and RANSAC for Image Matching and Stitching
 - Assignment 5: Human Engineered Features: Bag of Words for Scene Classification
+- Assignment 6: Exploring CNNs and Image Segmentation
+
+All readings, course notes, and assignments completed as of Jan 6th, 2024
